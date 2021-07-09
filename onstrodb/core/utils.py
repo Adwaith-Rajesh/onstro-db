@@ -1,5 +1,7 @@
+from hashlib import sha256
 from typing import Any
 from typing import Dict
+from typing import List
 
 from ._dataclass import Property
 from onstrodb.errors.schema_errors import PropertyValueError
@@ -14,3 +16,10 @@ def validate_convert_schema(schema: Dict[str, Dict[str, object]]) -> Dict[str, P
     except PropertyValueError:
         raise SchemaValueError(message="The values passed in the schema are not valid. Possible that the type of 'default' value \
         may not match the 'property_type'")
+
+
+def generate_hash_id(values: List[str]) -> str:
+    """Genetate SHA256 check sum by combining all the entries inside the values list,
+        and return the first 8 characters.
+    """
+    return sha256(bytes("".join(values), encoding="utf-8")).hexdigest()[:8]
