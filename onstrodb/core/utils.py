@@ -7,8 +7,10 @@ from ._dataclass import Property
 from onstrodb.errors.schema_errors import PropertyValueError
 from onstrodb.errors.schema_errors import SchemaValueError
 
+SchemaDictType = Dict[str, Dict[str, object]]
 
-def validate_convert_schema(schema: Dict[str, Dict[str, object]]) -> Dict[str, Property[Any]]:
+
+def validate_convert_schema(schema: SchemaDictType) -> Dict[str, Property[Any]]:
     """Converts the user provided schema to a str -> Property schema
     """
     try:
@@ -16,6 +18,10 @@ def validate_convert_schema(schema: Dict[str, Dict[str, object]]) -> Dict[str, P
     except PropertyValueError:
         raise SchemaValueError(message="The values passed in the schema are not valid. Possible that the type of 'default' value \
         may not match the 'property_type'")
+
+
+def cross_validate_with_db(test_schema: SchemaDictType, schema: SchemaDictType) -> bool:
+    pass
 
 
 def generate_hash_id(values: List[str]) -> str:
