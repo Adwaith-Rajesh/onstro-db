@@ -2,16 +2,24 @@ from typing import Dict
 from typing import List
 from typing import Union
 
-import pandas as pd  # noqa: F401
-
+import pandas as pd
 
 DBDataType = Dict[str, Union[int, str, bool]]
+SchemaDictType = Dict[str, Dict[str, object]]
 
 
-class OnstroDb():
+class OnstroDb:
 
-    def __init__(self, db_name: str, allow_data_duplication: bool = False) -> None:
-        pass
+    """The main API for the DB"""
+
+    def __init__(self, db_name: str, schema: SchemaDictType, allow_data_duplication: bool = False) -> None:
+
+        self._db_name = db_name
+        self._schema = schema
+        self._data_dupe = allow_data_duplication
+
+        self._db: pd.DataFrame = None
+        self._modified: bool = False
 
     def add(self, value: DBDataType) -> str:
         pass
@@ -45,3 +53,6 @@ class OnstroDb():
 
     def purge(self) -> None:
         pass
+
+    def _reload_db(self) -> None:
+        """Reload the the pandas DF"""
