@@ -1,4 +1,5 @@
 import os
+import pickle
 from hashlib import sha256
 from pathlib import Path
 from typing import Dict
@@ -11,7 +12,7 @@ SchemaDictUnknownType = Dict[str, Dict[str, object]]
 SchemaDictType = Dict[str, Dict[str, Union[int, str, bool]]]
 
 
-def validate_schema(schema: SchemaDictUnknownType) -> bool:
+def validate_schema(schema: Union[SchemaDictUnknownType, SchemaDictType]) -> bool:
     """Check whether all the keys in schema are valid"""
 
     valid_field_property_keys = ["type", "required", "default"]
@@ -70,16 +71,36 @@ def validate_data_with_schema(data: Dict[str, object], schema: SchemaDictType) -
 
 def get_db_path(db_name: str) -> str:
     """returns the absolute path of the DB"""
-    default = os.path.join(os.path.expanduser("~"), ".cache", "onstrodb")
+    # default = os.path.join(os.path.expanduser("~"), ".cache", "onstrodb")
+    default = os.path.join(".", "onstro-db")
     db_directory = os.environ.get("ONSTRO_DB_PATH", default=default)
 
     return os.path.join(db_directory, db_name)
 
 
-def create_db_folders_files(db_path: str) -> None:
+def create_db_folders(db_path: str) -> None:
     path = Path(db_path)
     if not path.is_dir():
         path.mkdir(parents=True, exist_ok=True)
+
+
+def load_cached_schema(db_path: str) -> Union[SchemaDictType, None]:
+    """Loads the existing schema, that was provided when the DB was created for the first time."""
+    c_schema_path = os.path.join(db_path, "db.schema")
+
+    if Path(c_schema_path).is_file():
+        with open(c_schema_path, "rb") as f:
+            return pickle.load(f)
+    else:
+        return None
+
+
+def dump_cached_schema(db_path: str, schema: SchemaDictType) -> None:
+    """Dumps the schema in a pickle form for later use"""
+    c_schema_path = os.path.join(db_path, "db.schema")
+
+    with open(c_schema_path, "wb") as f:
+        pickle.dump(schema, f)
 
 
 def generate_hash_id(values: List[str]) -> str:
