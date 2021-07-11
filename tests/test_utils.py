@@ -3,6 +3,7 @@ from typing import Union
 
 import pytest
 
+from onstrodb.core.utils import add_default_to_data
 from onstrodb.core.utils import generate_hash_id
 from onstrodb.core.utils import validate_data_with_schema
 from onstrodb.core.utils import validate_schema
@@ -67,3 +68,23 @@ def test_validate_schema_error_conditions(test_schema):
 )
 def test_validate_data_with_schema(test_input, output):
     assert validate_data_with_schema(test_input, test_schema) == output
+
+
+@pytest.mark.parametrize(
+    "test_input,output",
+    [
+        ({"name": "Mike", "age": 24, "place": "denmark"},
+         {"name": "Mike", "age": 24, "place": "denmark"}),
+
+        ({"name": "ad", "age": 23},
+         {"name": "ad", "age": 23, "place": "canada"}),
+
+        ({"name": "Hello", "age": 24}, {
+         "name": "Hello", "age": 24, "place": "canada"}),
+
+        ({"name": "ad", "age": 23, "place": "texas"},
+         {"name": "ad", "age": 23, "place": "texas"})
+    ]
+)
+def test_add_default_to_data(test_input, output):
+    assert add_default_to_data(test_input, test_schema) == output

@@ -69,6 +69,25 @@ def validate_data_with_schema(data: Dict[str, object], schema: SchemaDictType) -
     return True
 
 
+def add_default_to_data(data: Dict[str, Union[int, str, bool]],
+                        schema: SchemaDictType) -> Dict[str, Union[str, int, bool]]:
+    """Adds the default values present in the schema to the required fields
+        if the values are not provided in the data
+    """
+    defaults: List[str] = [j for j in [
+        i for i in schema if "default" in schema[i]] if schema[j]["default"]]
+
+    if not all(i in data for i in defaults):
+        for i in defaults:
+            if i not in data:
+                data[i] = schema[i]["default"]
+
+        return data
+
+    else:
+        return data
+
+
 def get_db_path(db_name: str) -> str:
     """returns the absolute path of the DB"""
     # default = os.path.join(os.path.expanduser("~"), ".cache", "onstrodb")
