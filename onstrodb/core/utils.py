@@ -8,11 +8,10 @@ from typing import Union
 
 from onstrodb.errors.schema_errors import SchemaError
 
-SchemaDictUnknownType = Dict[str, Dict[str, object]]
-SchemaDictType = Dict[str, Dict[str, Union[int, str, bool]]]
+SchemaDictType = Dict[str, Dict[str, object]]
 
 
-def validate_schema(schema: Union[SchemaDictUnknownType, SchemaDictType]) -> bool:
+def validate_schema(schema: SchemaDictType) -> bool:
     """Check whether all the keys in schema are valid"""
 
     valid_field_property_keys = ["type", "required", "default"]
@@ -69,8 +68,7 @@ def validate_data_with_schema(data: Dict[str, object], schema: SchemaDictType) -
     return True
 
 
-def add_default_to_data(data: Dict[str, Union[int, str, bool]],
-                        schema: SchemaDictType) -> Dict[str, Union[str, int, bool]]:
+def add_default_to_data(data: Dict[str, object], schema: SchemaDictType) -> Dict[str, object]:
     """Adds the default values present in the schema to the required fields
         if the values are not provided in the data
     """

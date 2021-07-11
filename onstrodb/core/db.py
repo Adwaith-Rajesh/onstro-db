@@ -5,16 +5,20 @@ from typing import Union
 
 import pandas as pd
 
+from .utils import add_default_to_data
 from .utils import create_db_folders
 from .utils import dump_cached_schema
+from .utils import generate_hash_id
 from .utils import get_db_path
 from .utils import load_cached_schema
+from .utils import validate_data_with_schema
 from .utils import validate_schema
+from onstrodb.errors.common_errors import DataError
 from onstrodb.errors.schema_errors import SchemaError
 
 # types
 DBDataType = Dict[str, Union[int, str, bool]]
-SchemaDictType = Dict[str, Dict[str, Union[int, str, bool]]]
+SchemaDictType = Dict[str, Dict[str, object]]
 
 
 class OnstroDb:
@@ -22,7 +26,7 @@ class OnstroDb:
     """The main API for the DB"""
 
     def __init__(self, db_name: str, schema: Optional[SchemaDictType] = None,
-                 allow_data_duplication: bool = False) -> None:
+                 db_path: Optional[str] = None, allow_data_duplication: bool = False) -> None:
 
         self._db_name = db_name
         self._schema = schema
@@ -33,6 +37,9 @@ class OnstroDb:
         self._modified: bool = False
         self._db_path: str = get_db_path(db_name)
 
+        if db_path:
+            self._db_path = f"{db_path}/{self._db_name}"
+
         # validate the user defined schema
         self._validate_schema()
 
@@ -40,14 +47,27 @@ class OnstroDb:
         self._load_initial_schema()
         self._reload_db()
 
-    def add(self, value: DBDataType) -> str:
-        pass
+        # meta data about the db
+        if self._schema:
+            self._columns = self._schema.keys()
 
-    def add_many(self, values: List[DBDataType]) -> None:
-        pass
+    def add(self, values: List[Dict[str, object]]) -> None:
+        new_data: List[Dict[str, object]] = []
 
-    def get(self, count: int = 1) -> List[DBDataType]:
-        pass
+        for data in values:
+            if self._schema:
+                if validate_data_with_schema(data, self._schema):
+                    data = add_default_to_data(data, self._schema)
+                    data["hash"] = generate_hash_id(
+                        [str(i) for i in data.values()])
+                    new_data.append(data)
+
+                else:
+                    raise DataError(
+                        f"The data {data!r} does not comply with the schema")
+
+        self._db = self._db.append(new_data)
+        self._db.set_index("hash", inplace=True)
 
     def get_by_query(self, query: Dict[str, str]) -> List[DBDataType]:
         pass
@@ -71,6 +91,9 @@ class OnstroDb:
         pass
 
     def purge(self) -> None:
+        pass
+
+    def commit(self) -> None:
         pass
 
     def _validate_schema(self) -> None:
