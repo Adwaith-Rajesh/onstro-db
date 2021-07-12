@@ -44,7 +44,8 @@ def test_generate_hash_id(test_input, output):
     "test_input,output",
     [
         ({"name": {"type": "str", "required": True, "default": "ad"}}, True),
-        ({"name": {"type": "str"}, "age": {"type": "int"}}, True)
+        ({"name": {"type": "str"}, "age": {"type": "int"}}, True),
+        ({"name": {"type": "str"}, "age": {"type": "float"}}, True)
     ]
 )
 def test_validate_schema_accepted_conditions(test_input, output):
@@ -84,18 +85,24 @@ def test_validate_data_with_schema(test_input, output):
 @pytest.mark.parametrize(
     "test_input,output",
     [
-        ({"name": "Mike", "age": 24, "place": "denmark"},
-         {"name": "Mike", "age": 24, "place": "denmark"}),
+        ({"name": "Mike", "age": 24, "place": "denmark", "exp": 3.4},
+         {"name": "Mike", "age": 24, "place": "denmark", "exp": 3.4}),
 
         ({"name": "ad", "age": 23},
-         {"name": "ad", "age": 23, "place": "canada"}),
+         {"name": "ad", "age": 23, "place": "canada", "exp": None}),
 
         ({"name": "Hello", "age": 24}, {
-         "name": "Hello", "age": 24, "place": "canada"}),
+         "name": "Hello", "age": 24, "place": "canada", "exp": None}),
 
-        ({"name": "ad", "age": 23, "place": "texas"},
-         {"name": "ad", "age": 23, "place": "texas"})
+        ({"name": "ad", "age": 23, "place": "texas", "exp": 3.4},
+         {"name": "ad", "age": 23, "place": "texas", "exp": 3.4})
     ]
 )
 def test_add_default_to_data(test_input, output):
+    test_schema: Dict[str, Dict[str, object]] = {
+        "name": {"type": "str", "required": True},
+        "age": {"type": "int", "required": True},
+        "place": {"type": "str", "default": "canada"},
+        "exp": {"type": "float"}
+    }
     assert add_default_to_data(test_input, test_schema) == output

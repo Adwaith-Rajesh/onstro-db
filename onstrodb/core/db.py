@@ -1,3 +1,4 @@
+from pprint import pformat
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -52,7 +53,10 @@ class OnstroDb:
         self._load_initial_schema()
         self._reload_db()
 
-    def add(self, values: List[Dict[str, object]]) -> None:
+    def __repr__(self) -> str:
+        return pformat(self._db.to_dict(), indent=4, width=80)
+
+    def add(self, values: List[Dict[str, object]], get_hash_id: bool = False) -> Union[None, List[str]]:
 
         new_data: List[Dict[str, object]] = []
         new_hashes: List[str] = []
@@ -75,6 +79,12 @@ class OnstroDb:
 
         self._db = pd.concat([self._db, new_df],
                              verify_integrity=not self._data_dupe)
+        # TODO: raise a custom error on concat error
+
+        if get_hash_id:
+            return new_hashes
+
+        return None
 
     def get_by_query(self, query: Dict[str, str]) -> List[DBDataType]:
         pass
@@ -95,7 +105,9 @@ class OnstroDb:
         pass
 
     def delete_by_hash_id(self, hash_id: str) -> None:
-        pass
+        ids = list(self._db.index)
+        if hash_id in ids:
+            self._db = self._db.drop(hash_id)
 
     def purge(self) -> None:
         """Removes all the data from the runtime instance of the db"""

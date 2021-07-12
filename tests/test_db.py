@@ -8,6 +8,7 @@ import pytest
 from onstrodb.core.db import OnstroDb
 from onstrodb.core.utils import create_db_folders
 from onstrodb.core.utils import dump_cached_schema
+from onstrodb.core.utils import generate_hash_id
 from onstrodb.errors.schema_errors import SchemaError
 
 
@@ -80,6 +81,26 @@ def test_db_add():
 
     assert db._db.to_dict() == {'name': {'ec676189': 'ad'}, 'age': {
         'ec676189': 34}, 'place': {'ec676189': 'texas'}}
+
+
+@pytest.mark.usefixtures("rm_folder")
+def test_add_with_return_values():
+
+    data1 = {
+        "name": "ad",
+        "age": 34,
+        "place": "texas"
+    }
+    data2 = {
+        "name": "test",
+        "age": 35,
+        "place": "vegas"
+    }
+    db = OnstroDb(db_name="test", db_path="test_onstro", schema=test_schema)
+    ids = db.add([data1, data2], get_hash_id=True)
+
+    assert ids == [generate_hash_id([str(i) for i in data1.values()]), generate_hash_id([
+        str(i) for i in data2.values()])]
 
 
 @pytest.mark.usefixtures("rm_folder")

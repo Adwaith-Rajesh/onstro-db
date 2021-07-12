@@ -27,7 +27,7 @@ def validate_schema(schema: SchemaDictType) -> bool:
             raise SchemaError(
                 f"The 'type' of the field {key!r} is not defined")
 
-        if values["type"] not in ["int", "str", "bool"]:
+        if values["type"] not in ["int", "str", "bool", "float"]:
             raise SchemaError(
                 "The value of 'type' must be any of ('int', 'str', 'bool') with quotes.")
 
@@ -74,8 +74,17 @@ def add_default_to_data(data: Dict[str, object], schema: SchemaDictType) -> Dict
     """Adds the default values present in the schema to the required fields
         if the values are not provided in the data
     """
+
+    # add non as defaults to the field that is not required and does not have
+    # a default value
+    non_default_values = [i for i in schema if all(
+        j not in schema[i] for j in ["required", "default"])]
+
+    for val in non_default_values:
+        schema[val]["default"] = None
+
     defaults: List[str] = [j for j in [
-        i for i in schema if "default" in schema[i]] if schema[j]["default"]]
+        i for i in schema if "default" in schema[i]] if "default" in schema[j]]
 
     if not all(i in data for i in defaults):
         for i in defaults:
