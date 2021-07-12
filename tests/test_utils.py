@@ -22,13 +22,13 @@ def remove_folders():
     shutil.rmtree('./test_onstro')
 
 
-@ pytest.fixture
+@pytest.fixture
 def rm_folder():
     yield
     remove_folders()
 
 
-@ pytest.mark.parametrize(
+@pytest.mark.parametrize(
     "test_input,output",
     [
         (["Hello", "World"], "872e4e50"),
@@ -40,7 +40,7 @@ def test_generate_hash_id(test_input, output):
     assert generate_hash_id(test_input) == output
 
 
-@ pytest.mark.parametrize(
+@pytest.mark.parametrize(
     "test_input,output",
     [
         ({"name": {"type": "str", "required": True, "default": "ad"}}, True),
@@ -51,7 +51,7 @@ def test_validate_schema_accepted_conditions(test_input, output):
     assert validate_schema(test_input) is output
 
 
-@ pytest.mark.parametrize(
+@pytest.mark.parametrize(
     "test_schema",
     [
         {1: {"type": "int"}},
@@ -66,7 +66,7 @@ def test_validate_schema_error_conditions(test_schema):
         _ = validate_schema(test_schema)
 
 
-@ pytest.mark.parametrize(
+@pytest.mark.parametrize(
     "test_input,output",
     [
         ({"name": "ad", "age": 3, "place": "texas"}, True),
@@ -81,7 +81,7 @@ def test_validate_data_with_schema(test_input, output):
     assert validate_data_with_schema(test_input, test_schema) == output
 
 
-@ pytest.mark.parametrize(
+@pytest.mark.parametrize(
     "test_input,output",
     [
         ({"name": "Mike", "age": 24, "place": "denmark"},

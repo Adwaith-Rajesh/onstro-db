@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 from typing import Dict
@@ -66,3 +67,44 @@ def test_db_schema_error_schema_mismatch():
 
     with pytest.raises(SchemaError):
         _ = OnstroDb(db_name="test", db_path="test_onstro", schema=new_schema)
+
+
+@pytest.mark.usefixtures("rm_folder")
+def test_db_add():
+    db = OnstroDb(db_name="test", db_path="test_onstro", schema=test_schema)
+    db.add([
+        {"name": "ad",
+         "age": 34,
+         "place": "texas"}
+    ])
+
+    assert db._db.to_dict() == {'name': {'ec676189': 'ad'}, 'age': {
+        'ec676189': 34}, 'place': {'ec676189': 'texas'}}
+
+
+@pytest.mark.usefixtures("rm_folder")
+def test_db_commit():
+    db = OnstroDb(db_name="test", db_path="test_onstro", schema=test_schema)
+    db.add([
+        {"name": "ad",
+         "age": 34,
+         "place": "texas"}
+    ])
+    db.commit()
+
+    assert Path(os.path.join("test_onstro", "test",
+                "test.db")).is_file() is True
+
+
+@pytest.mark.usefixtures("rm_folder")
+def test_db_purge():
+    db = OnstroDb(db_name="test", db_path="test_onstro", schema=test_schema)
+    db.add([
+        {"name": "ad",
+         "age": 34,
+         "place": "texas"}
+    ])
+
+    assert len(db._db) == 1
+    db.purge()
+    assert db._db.empty is True
