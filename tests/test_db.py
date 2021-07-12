@@ -22,13 +22,13 @@ def remove_folders():
     shutil.rmtree('./test_onstro')
 
 
-@ pytest.fixture
+@pytest.fixture
 def db_class():
     yield OnstroDb(db_name="test", db_path="./test_onstro", schema=test_schema)
     remove_folders()
 
 
-@ pytest.fixture
+@pytest.fixture
 def rm_folder():
     yield
     remove_folders()
@@ -40,7 +40,7 @@ def test_file_folder_creation(db_class):
     assert Path("./test_onstro/test/db.schema").is_file() is True
 
 
-@ pytest.mark.usefixtures("rm_folder")
+@pytest.mark.usefixtures("rm_folder")
 def test_schema_loading():
     create_db_folders("./test_onstro/test")
     dump_cached_schema(schema=test_schema, db_path="./test_onstro/test")
@@ -48,13 +48,13 @@ def test_schema_loading():
     assert db_class._schema == test_schema
 
 
-@ pytest.mark.usefixtures("rm_folder")
+@pytest.mark.usefixtures("rm_folder")
 def test_db_schema_error_schema_not_provided():
     with pytest.raises(SchemaError):
         _ = OnstroDb(db_name="test", db_path="test_onstro")
 
 
-@ pytest.mark.usefixtures("rm_folder")
+@pytest.mark.usefixtures("rm_folder")
 def test_db_schema_error_schema_mismatch():
     create_db_folders("./test_onstro/test")
     dump_cached_schema(schema=test_schema, db_path="./test_onstro/test")

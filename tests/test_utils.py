@@ -1,5 +1,5 @@
+import shutil
 from typing import Dict
-from typing import Union
 
 import pytest
 
@@ -10,14 +10,25 @@ from onstrodb.core.utils import validate_schema
 from onstrodb.errors.schema_errors import SchemaError
 
 
-test_schema: Dict[str, Dict[str, Union[int, str, bool]]] = {
+test_schema: Dict[str, Dict[str, object]] = {
     "name": {"type": "str", "required": True},
     "age": {"type": "int", "required": True},
     "place": {"type": "str", "default": "canada"}
 }
 
 
-@pytest.mark.parametrize(
+def remove_folders():
+    "removes the test folders"
+    shutil.rmtree('./test_onstro')
+
+
+@ pytest.fixture
+def rm_folder():
+    yield
+    remove_folders()
+
+
+@ pytest.mark.parametrize(
     "test_input,output",
     [
         (["Hello", "World"], "872e4e50"),
@@ -29,7 +40,7 @@ def test_generate_hash_id(test_input, output):
     assert generate_hash_id(test_input) == output
 
 
-@pytest.mark.parametrize(
+@ pytest.mark.parametrize(
     "test_input,output",
     [
         ({"name": {"type": "str", "required": True, "default": "ad"}}, True),
@@ -40,7 +51,7 @@ def test_validate_schema_accepted_conditions(test_input, output):
     assert validate_schema(test_input) is output
 
 
-@pytest.mark.parametrize(
+@ pytest.mark.parametrize(
     "test_schema",
     [
         {1: {"type": "int"}},
@@ -55,7 +66,7 @@ def test_validate_schema_error_conditions(test_schema):
         _ = validate_schema(test_schema)
 
 
-@pytest.mark.parametrize(
+@ pytest.mark.parametrize(
     "test_input,output",
     [
         ({"name": "ad", "age": 3, "place": "texas"}, True),
@@ -70,7 +81,7 @@ def test_validate_data_with_schema(test_input, output):
     assert validate_data_with_schema(test_input, test_schema) == output
 
 
-@pytest.mark.parametrize(
+@ pytest.mark.parametrize(
     "test_input,output",
     [
         ({"name": "Mike", "age": 24, "place": "denmark"},

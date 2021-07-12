@@ -8,9 +8,11 @@ import pandas as pd
 from .utils import add_default_to_data
 from .utils import create_db_folders
 from .utils import dump_cached_schema
+from .utils import dump_db
 from .utils import generate_hash_id
 from .utils import get_db_path
 from .utils import load_cached_schema
+from .utils import load_db
 from .utils import validate_data_with_schema
 from .utils import validate_schema
 from onstrodb.errors.common_errors import DataError
@@ -34,7 +36,6 @@ class OnstroDb:
 
         # db variables
         self._db: pd.DataFrame = None
-        self._modified: bool = False
         self._db_path: str = get_db_path(db_name)
 
         if db_path:
@@ -43,31 +44,37 @@ class OnstroDb:
         # validate the user defined schema
         self._validate_schema()
 
+        # meta data about the db
+        if self._schema:
+            self._columns = list(self._schema.keys())
+
         # start the loading sequence
         self._load_initial_schema()
         self._reload_db()
 
-        # meta data about the db
-        if self._schema:
-            self._columns = self._schema.keys()
-
     def add(self, values: List[Dict[str, object]]) -> None:
+
         new_data: List[Dict[str, object]] = []
+        new_hashes: List[str] = []
 
         for data in values:
             if self._schema:
                 if validate_data_with_schema(data, self._schema):
                     data = add_default_to_data(data, self._schema)
-                    data["hash"] = generate_hash_id(
+                    hash_id = generate_hash_id(
                         [str(i) for i in data.values()])
+
                     new_data.append(data)
+                    new_hashes.append(hash_id)
 
                 else:
                     raise DataError(
                         f"The data {data!r} does not comply with the schema")
 
-        self._db = self._db.append(new_data)
-        self._db.set_index("hash", inplace=True)
+        new_df = pd.DataFrame(new_data, new_hashes)
+
+        self._db = pd.concat([self._db, new_df],
+                             verify_integrity=not self._data_dupe)
 
     def get_by_query(self, query: Dict[str, str]) -> List[DBDataType]:
         pass
@@ -91,10 +98,13 @@ class OnstroDb:
         pass
 
     def purge(self) -> None:
-        pass
+        """Removes all the data from the runtime instance of the db"""
+        self._db = self._db.iloc[0:0]
 
     def commit(self) -> None:
-        pass
+        """Store the current in the db in a file"""
+        if isinstance(self._db, pd.DataFrame):
+            dump_db(self._db, self._db_path, self._db_name)
 
     def _validate_schema(self) -> None:
         if self._schema:
@@ -102,6 +112,14 @@ class OnstroDb:
 
     def _reload_db(self) -> None:
         """Reload the the pandas DF"""
+
+        data = load_db(self._db_path, self._db_name)
+        if isinstance(data, pd.DataFrame):
+            # data.set_index("hash", inplace=True)
+            self._db = data
+
+        else:
+            self._db = pd.DataFrame(columns=self._columns)
 
     def _load_initial_schema(self) -> None:
         """Loads the schema that was provided when the DB was created for the first time"""
@@ -114,6 +132,7 @@ class OnstroDb:
                         "The schema provided does not match with the initial schema")
             else:
                 self._schema = schema.copy()
+                self._columns = list(self._schema.keys())
         else:
             if not self._schema:
                 raise SchemaError("The schema is not provided")

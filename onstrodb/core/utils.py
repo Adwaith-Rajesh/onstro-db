@@ -6,6 +6,8 @@ from typing import Dict
 from typing import List
 from typing import Union
 
+import pandas as pd
+
 from onstrodb.errors.schema_errors import SchemaError
 
 SchemaDictType = Dict[str, Dict[str, object]]
@@ -84,6 +86,21 @@ def add_default_to_data(data: Dict[str, object], schema: SchemaDictType) -> Dict
 
     else:
         return data
+
+
+def dump_db(df: pd.DataFrame, db_path: str, db_name: str) -> None:
+    """Converts the df to a pickle file"""
+    df.to_pickle(os.path.join(db_path, f"{db_name}.db"))
+
+
+def load_db(db_path: str, db_name: str) -> Union[pd.DataFrame, None]:
+    """loads the df from the pickle file"""
+    path = os.path.join(db_path, f"{db_name}.db")
+    if Path(path).is_file():
+        return pd.read_pickle(path)
+
+    else:
+        return None
 
 
 def get_db_path(db_name: str) -> str:
