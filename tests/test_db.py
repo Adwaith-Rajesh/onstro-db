@@ -156,7 +156,19 @@ def test_db_in_memory():
     assert Path("test_onstro").is_dir() is False
 
 
-def test_db_get_by_query():
+@pytest.mark.parametrize(
+    "test_input,output",
+    (
+        ({"age": 3},  {'a811ebf6': {'name': 'ab', 'age': 3, 'place': 'canada'},
+                       'a103f392': {'name': 'ac', 'age': 3, 'place': 'france'}}),
+        ({"name": "ac"}, {'a103f392': {
+            'name': 'ac', 'age': 3, 'place': 'france'}}),
+        ({"place": "france"}, {'a103f392': {
+            'name': 'ac', 'age': 3, 'place': 'france'}}),
+        ({"age": 5}, {})
+    )
+)
+def test_db_get_by_query_no_dupe(test_input, output):
 
     db = OnstroDb(db_name="test", in_memory=True, schema=test_schema)
     db.add([
@@ -165,13 +177,31 @@ def test_db_get_by_query():
         {"name": "ad", "age": 4}
     ])
 
-    assert db.get_by_query({"age": 3}) == {'a811ebf6': {'name': 'ab', 'age': 3, 'place': 'canada'},
-                                           'a103f392': {'name': 'ac', 'age': 3, 'place': 'france'}}
-    assert db.get_by_query({"name": "ac"}) == {'a103f392': {
-        'name': 'ac', 'age': 3, 'place': 'france'}}
-    assert db.get_by_query({"place": "france"}) == {'a103f392': {
-        'name': 'ac', 'age': 3, 'place': 'france'}}
-    assert db.get_by_query({"age": 5}) == {}
+    assert db.get_by_query(test_input) == output
+
+
+@pytest.mark.parametrize(
+    "test_input,output",
+    (
+        ({"age": 3}, {'name': {'a811ebf6': 'ab', 'a103f392': 'ac'},
+         'age': {'a811ebf6': 3, 'a103f392': 3}, 'place': {'a811ebf6': 'canada', 'a103f392': 'france'}}),
+        ({"name": "ac"}, {'name': {'a103f392': 'ac'}, 'age': {'a103f392': 3},
+                          'place': {'a103f392': 'france'}}),
+        ({"place": "france"}, {'name': {'a103f392': 'ac'}, 'age': {
+            'a103f392': 3}, 'place': {'a103f392': 'france'}}),
+        ({"age": 5}, {'name': {}, 'age': {}, 'place': {}})
+    )
+)
+def test_db_get_by_query_dupe(test_input, output):
+    db = OnstroDb(db_name="test", in_memory=True,
+                  schema=test_schema, allow_data_duplication=True)
+    db.add([
+        {"name": "ab", "age": 3},
+        {"name": "ac", "age": 3, "place": "france"},
+        {"name": "ad", "age": 4}
+    ])
+
+    assert db.get_by_query(test_input) == output
 
 
 @pytest.mark.parametrize(
@@ -186,3 +216,54 @@ def test_db_get_by_query_failure(test_input):
     db = OnstroDb(db_name="test", in_memory=True, schema=test_schema)
     with pytest.raises(QueryError):
         db.get_by_query(test_input)
+
+
+def test_db_get_all_no_dupe():
+    db = OnstroDb(db_name="test", in_memory=True,
+                  schema=test_schema, allow_data_duplication=False)
+    db.add([
+        {"name": "ab", "age": 3},
+        {"name": "ac", "age": 3, "place": "france"},
+        {"name": "ad", "age": 4}
+    ])
+
+    assert db.get_all() == {'a811ebf6': {'name': 'ab', 'age': 3, 'place': 'canada'},
+                            'a103f392': {'name': 'ac', 'age': 3, 'place': 'france'},
+                            'e160bb9c': {'name': 'ad', 'age': 4, 'place': 'canada'}}
+
+
+def test_db_get_all_dupe():
+    db = OnstroDb(db_name="test", in_memory=True,
+                  schema=test_schema, allow_data_duplication=True)
+    db.add([
+        {"name": "ab", "age": 3},
+        {"name": "ac", "age": 3, "place": "france"},
+        {"name": "ad", "age": 4}
+    ])
+
+    assert db.get_all() == {'name': {'a811ebf6': 'ab', 'a103f392': 'ac', 'e160bb9c': 'ad'},
+                            'age': {'a811ebf6': 3, 'a103f392': 3, 'e160bb9c': 4},
+                            'place': {'a811ebf6': 'canada', 'a103f392': 'france', 'e160bb9c': 'canada'}}
+
+
+def test_db_delete_by_query():
+    db = OnstroDb(db_name="test", in_memory=True,
+                  schema=test_schema, allow_data_duplication=False)
+    db.add([
+        {"name": "ab", "age": 3},
+        {"name": "ac", "age": 3, "place": "france"},
+        {"name": "ad", "age": 4}
+    ])
+
+    assert db.get_all() == {'a811ebf6': {'name': 'ab', 'age': 3, 'place': 'canada'},
+                            'a103f392': {'name': 'ac', 'age': 3, 'place': 'france'},
+                            'e160bb9c': {'name': 'ad', 'age': 4, 'place': 'canada'}}
+
+    db.delete_by_query({"age": 3})
+
+    assert db.get_all() == {'e160bb9c': {'name': 'ad',
+                                         'age': 4, 'place': 'canada'}}
+
+
+def test_db_delete_by_hash_id():
+    pass

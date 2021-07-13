@@ -59,7 +59,7 @@ class OnstroDb:
         self._reload_db()
 
     def __repr__(self) -> str:
-        return pformat(self._db.to_dict("index"), indent=4, width=80)
+        return pformat(self._to_dict(self._db), indent=4, width=80)
 
     def add(self, values: List[Dict[str, object]], get_hash_id: bool = False) -> Union[None, List[str]]:
 
@@ -99,26 +99,33 @@ class OnstroDb:
             if validate_query_data(query, self._schema):
                 key = list(query)[0]
                 filt = self._db[key] == query[key]
-                return self._db.loc[filt].to_dict("index")
+                return self._to_dict(self._db.loc[filt])
 
         return None
 
-    def get_by_hash_id(self, hash_id: str) -> DBDataType:
+    def get_by_hash_id(self, hash_id: str) -> GetType:
         pass
 
-    def get_all(self) -> List[DBDataType]:
-        pass
+    def get_all(self) -> GetType:
+        return self._to_dict(self._db)
 
-    def update_by_query(self, query: Dict[str, str], update_data: DBDataType) -> None:
-        pass
+    def update_by_query(self, query: Dict[str, object], update_data: DBDataType) -> None:
+        if self._schema:
+            if validate_query_data(query, self._schema):
+                pass
 
     def update_by_hash_id(self, hash_id: str, update_data: DBDataType) -> None:
         pass
 
-    def delete_by_query(self, query: Dict[str, str]) -> List[str]:
-        pass
+    def delete_by_query(self, query: Dict[str, object]) -> None:
+        if self._schema:
+            if validate_query_data(query, self._schema):
+                key = list(query)[0]
+                filt = self._db[key] != query[key]
+                self._db = self._db.loc[filt]
 
     def delete_by_hash_id(self, hash_id: str) -> None:
+        # :TODO: test for this method
         ids = list(self._db.index)
         if hash_id in ids:
             self._db = self._db.drop(hash_id)
@@ -132,6 +139,17 @@ class OnstroDb:
         if isinstance(self._db, pd.DataFrame):
             if not self._in_memory:
                 dump_db(self._db, self._db_path, self._db_name)
+
+    def _to_dict(self, _df: pd.DataFrame) -> Dict[str, Dict[str, object]]:
+        """Returns the dict representation of the DB based on
+            the allow_data_duplication value
+        """
+
+        if not self._data_dupe:
+            return _df.to_dict("index")
+
+        else:
+            return _df.to_dict()
 
     def _validate_schema(self) -> None:
         if self._schema:
