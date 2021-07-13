@@ -10,6 +10,7 @@ from onstrodb.core.utils import create_db_folders
 from onstrodb.core.utils import dump_cached_schema
 from onstrodb.core.utils import generate_hash_id
 from onstrodb.errors.common_errors import DataDuplicateError
+from onstrodb.errors.common_errors import QueryError
 from onstrodb.errors.schema_errors import SchemaError
 
 
@@ -153,3 +154,35 @@ def test_db_in_memory():
     ])
 
     assert Path("test_onstro").is_dir() is False
+
+
+def test_db_get_by_query():
+
+    db = OnstroDb(db_name="test", in_memory=True, schema=test_schema)
+    db.add([
+        {"name": "ab", "age": 3},
+        {"name": "ac", "age": 3, "place": "france"},
+        {"name": "ad", "age": 4}
+    ])
+
+    assert db.get_by_query({"age": 3}) == {'a811ebf6': {'name': 'ab', 'age': 3, 'place': 'canada'},
+                                           'a103f392': {'name': 'ac', 'age': 3, 'place': 'france'}}
+    assert db.get_by_query({"name": "ac"}) == {'a103f392': {
+        'name': 'ac', 'age': 3, 'place': 'france'}}
+    assert db.get_by_query({"place": "france"}) == {'a103f392': {
+        'name': 'ac', 'age': 3, 'place': 'france'}}
+    assert db.get_by_query({"age": 5}) == {}
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    (
+        {"name": "test", "age": 3},
+        {"Name": "hello"},
+        {"age": "3"}
+    )
+)
+def test_db_get_by_query_failure(test_input):
+    db = OnstroDb(db_name="test", in_memory=True, schema=test_schema)
+    with pytest.raises(QueryError):
+        db.get_by_query(test_input)

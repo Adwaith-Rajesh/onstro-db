@@ -79,6 +79,12 @@ def validate_query_data(data: Dict[str, object], schema: SchemaDictType) -> bool
     if not all(i in schema for i in data.keys()):
         raise QueryError("Unknown key found in query")
 
+    key = list(data)[0]
+
+    if type(data[key]).__name__ != schema[key]["type"]:
+        raise QueryError(
+            f"The type of {key!r} must be {schema[key]['type']!r}")
+
     return True
 
 

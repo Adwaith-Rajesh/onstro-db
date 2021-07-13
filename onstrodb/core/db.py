@@ -15,6 +15,7 @@ from .utils import get_db_path
 from .utils import load_cached_schema
 from .utils import load_db
 from .utils import validate_data_with_schema
+from .utils import validate_query_data
 from .utils import validate_schema
 from onstrodb.errors.common_errors import DataDuplicateError
 from onstrodb.errors.common_errors import DataError
@@ -23,6 +24,7 @@ from onstrodb.errors.schema_errors import SchemaError
 # types
 DBDataType = Dict[str, object]
 SchemaDictType = Dict[str, Dict[str, object]]
+GetType = Union[Dict[str, Dict[str, object]], None]
 
 
 class OnstroDb:
@@ -57,7 +59,7 @@ class OnstroDb:
         self._reload_db()
 
     def __repr__(self) -> str:
-        return pformat(self._db.to_dict(), indent=4, width=80)
+        return pformat(self._db.to_dict("index"), indent=4, width=80)
 
     def add(self, values: List[Dict[str, object]], get_hash_id: bool = False) -> Union[None, List[str]]:
 
@@ -92,8 +94,14 @@ class OnstroDb:
 
         return None
 
-    def get_by_query(self, query: Dict[str, str]) -> List[DBDataType]:
-        pass
+    def get_by_query(self, query: Dict[str, object]) -> GetType:
+        if self._schema:
+            if validate_query_data(query, self._schema):
+                key = list(query)[0]
+                filt = self._db[key] == query[key]
+                return self._db.loc[filt].to_dict("index")
+
+        return None
 
     def get_by_hash_id(self, hash_id: str) -> DBDataType:
         pass

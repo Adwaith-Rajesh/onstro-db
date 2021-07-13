@@ -126,7 +126,8 @@ def test_validate_query_data_accpected_conditions(test_input, output):
     "test_input",
     (
         {"name": "test", "age": 3},
-        {"Name": "hello"}
+        {"Name": "hello"},
+        {"age": "3"}
     )
 )
 def test_validate_query_data_error_condition(test_input):
