@@ -14,3 +14,13 @@ class DataDuplicateError(Exception):
     def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(self.message)
+
+
+class QueryError(Exception):
+    """Raised when the query used by the user to access data / update data
+        is invalid
+    """
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+        super().__init__(self.message)

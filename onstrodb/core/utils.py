@@ -8,6 +8,7 @@ from typing import Union
 
 import pandas as pd
 
+from onstrodb.errors.common_errors import QueryError
 from onstrodb.errors.schema_errors import SchemaError
 
 SchemaDictType = Dict[str, Dict[str, object]]
@@ -66,6 +67,17 @@ def validate_data_with_schema(data: Dict[str, object], schema: SchemaDictType) -
     for d in data:
         if type(data[d]).__name__ != schema[d]["type"]:
             return False
+
+    return True
+
+
+def validate_query_data(data: Dict[str, object], schema: SchemaDictType) -> bool:
+    if len(data) != 1:
+        raise QueryError(
+            f"The length of the query must be 1 an not {len(data)!r}")
+
+    if not all(i in schema for i in data.keys()):
+        raise QueryError("Unknown key found in query")
 
     return True
 

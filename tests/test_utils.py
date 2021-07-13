@@ -6,7 +6,9 @@ import pytest
 from onstrodb.core.utils import add_default_to_data
 from onstrodb.core.utils import generate_hash_id
 from onstrodb.core.utils import validate_data_with_schema
+from onstrodb.core.utils import validate_query_data
 from onstrodb.core.utils import validate_schema
+from onstrodb.errors.common_errors import QueryError
 from onstrodb.errors.schema_errors import SchemaError
 
 
@@ -106,3 +108,27 @@ def test_add_default_to_data(test_input, output):
         "exp": {"type": "float"}
     }
     assert add_default_to_data(test_input, test_schema) == output
+
+
+@pytest.mark.parametrize(
+    "test_input,output",
+    (
+        ({"name": "test"}, True),
+        ({"age": 3}, True),
+        ({"place": "canada"}, True)
+    )
+)
+def test_validate_query_data_accpected_conditions(test_input, output):
+    assert validate_query_data(test_input, test_schema) is output
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    (
+        {"name": "test", "age": 3},
+        {"Name": "hello"}
+    )
+)
+def test_validate_query_data_error_condition(test_input):
+    with pytest.raises(QueryError):
+        validate_query_data(test_input, test_schema)
