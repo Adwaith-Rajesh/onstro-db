@@ -6,3 +6,11 @@ class DataError(Exception):
     def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(self.message)
+
+
+class DataDuplicateError(Exception):
+    """Raised when the user provided already exists in DB"""
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+        super().__init__(self.message)

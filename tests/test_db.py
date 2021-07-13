@@ -9,6 +9,7 @@ from onstrodb.core.db import OnstroDb
 from onstrodb.core.utils import create_db_folders
 from onstrodb.core.utils import dump_cached_schema
 from onstrodb.core.utils import generate_hash_id
+from onstrodb.errors.common_errors import DataDuplicateError
 from onstrodb.errors.schema_errors import SchemaError
 
 
@@ -129,3 +130,26 @@ def test_db_purge():
     assert len(db._db) == 1
     db.purge()
     assert db._db.empty is True
+
+
+@pytest.mark.usefixtures("rm_folder")
+def test_db_add_raises_dupe_error():
+
+    db = OnstroDb(db_name="test", db_path="test_onstro", schema=test_schema)
+
+    with pytest.raises(DataDuplicateError):
+        db.add([
+            {"name": "ad", "age": 3, "place": "canada"},
+            {"name": "ad", "age": 3, "place": "canada"},
+        ])
+
+
+def test_db_in_memory():
+
+    db = OnstroDb(db_name="test", schema=test_schema,
+                  in_memory=True, db_path="test_onstro")
+    db.add([
+        {"name": "test", "age": 4}
+    ])
+
+    assert Path("test_onstro").is_dir() is False

@@ -16,11 +16,12 @@ from .utils import load_cached_schema
 from .utils import load_db
 from .utils import validate_data_with_schema
 from .utils import validate_schema
+from onstrodb.errors.common_errors import DataDuplicateError
 from onstrodb.errors.common_errors import DataError
 from onstrodb.errors.schema_errors import SchemaError
 
 # types
-DBDataType = Dict[str, Union[int, str, bool]]
+DBDataType = Dict[str, object]
 SchemaDictType = Dict[str, Dict[str, object]]
 
 
@@ -29,11 +30,13 @@ class OnstroDb:
     """The main API for the DB"""
 
     def __init__(self, db_name: str, schema: Optional[SchemaDictType] = None,
-                 db_path: Optional[str] = None, allow_data_duplication: bool = False) -> None:
+                 db_path: Optional[str] = None, allow_data_duplication: bool = False,
+                 in_memory: bool = False) -> None:
 
         self._db_name = db_name
         self._schema = schema
         self._data_dupe = allow_data_duplication
+        self._in_memory = in_memory
 
         # db variables
         self._db: pd.DataFrame = None
@@ -77,9 +80,12 @@ class OnstroDb:
 
         new_df = pd.DataFrame(new_data, new_hashes)
 
-        self._db = pd.concat([self._db, new_df],
-                             verify_integrity=not self._data_dupe)
-        # TODO: raise a custom error on concat error
+        try:
+            self._db = pd.concat([self._db, new_df],
+                                 verify_integrity=not self._data_dupe)
+        except ValueError:
+            raise DataDuplicateError(
+                "The data provided, contains duplicate values") from None
 
         if get_hash_id:
             return new_hashes
@@ -116,7 +122,8 @@ class OnstroDb:
     def commit(self) -> None:
         """Store the current in the db in a file"""
         if isinstance(self._db, pd.DataFrame):
-            dump_db(self._db, self._db_path, self._db_name)
+            if not self._in_memory:
+                dump_db(self._db, self._db_path, self._db_name)
 
     def _validate_schema(self) -> None:
         if self._schema:
@@ -135,7 +142,8 @@ class OnstroDb:
 
     def _load_initial_schema(self) -> None:
         """Loads the schema that was provided when the DB was created for the first time"""
-        create_db_folders(self._db_path)
+        if not self._in_memory:
+            create_db_folders(self._db_path)
         schema = load_cached_schema(self._db_path)
         if schema:
             if self._schema:
@@ -149,4 +157,5 @@ class OnstroDb:
             if not self._schema:
                 raise SchemaError("The schema is not provided")
             else:
-                dump_cached_schema(self._db_path, self._schema)
+                if not self._in_memory:
+                    dump_cached_schema(self._db_path, self._schema)
