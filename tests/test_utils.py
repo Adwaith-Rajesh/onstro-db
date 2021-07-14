@@ -8,6 +8,8 @@ from onstrodb.core.utils import generate_hash_id
 from onstrodb.core.utils import validate_data_with_schema
 from onstrodb.core.utils import validate_query_data
 from onstrodb.core.utils import validate_schema
+from onstrodb.core.utils import validate_update_data
+from onstrodb.errors.common_errors import DataError
 from onstrodb.errors.common_errors import QueryError
 from onstrodb.errors.schema_errors import SchemaError
 
@@ -133,3 +135,28 @@ def test_validate_query_data_accpected_conditions(test_input, output):
 def test_validate_query_data_error_condition(test_input):
     with pytest.raises(QueryError):
         validate_query_data(test_input, test_schema)
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    (
+        {"name": "test", "age": 3},
+        {"name": "test", "age": 4, "place": "texas"},
+        {"age": 4}
+    )
+)
+def test_validate_update_data(test_input):
+    assert validate_update_data(test_input, test_schema) is True
+
+
+@pytest.mark.parametrize(
+    "test_input", (
+        {"name": 3},
+        {"Name": "test"},
+        {"name": 3, "age": "3"},
+        {"name": "test", "age": 4, "place": 4}
+    )
+)
+def test_validate_update_data_failure(test_input):
+    with pytest.raises(DataError):
+        validate_update_data(test_input, test_schema)

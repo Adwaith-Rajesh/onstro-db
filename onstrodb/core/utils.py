@@ -8,6 +8,7 @@ from typing import Union
 
 import pandas as pd
 
+from onstrodb.errors.common_errors import DataError
 from onstrodb.errors.common_errors import QueryError
 from onstrodb.errors.schema_errors import SchemaError
 
@@ -84,6 +85,20 @@ def validate_query_data(data: Dict[str, object], schema: SchemaDictType) -> bool
     if type(data[key]).__name__ != schema[key]["type"]:
         raise QueryError(
             f"The type of {key!r} must be {schema[key]['type']!r}")
+
+    return True
+
+
+def validate_update_data(data: Dict[str, object], schema: SchemaDictType) -> bool:
+    if not all(i in schema for i in data.keys()):
+        raise DataError("Unknown key found in data")
+
+    key = list(data)
+
+    for k in key:
+        if type(data[k]).__name__ != schema[k]["type"]:
+            raise DataError(
+                f"The type of {k!r} must be {schema[k]['type']!r}")
 
     return True
 
