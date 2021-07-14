@@ -18,6 +18,7 @@ from .utils import load_db
 from .utils import validate_data_with_schema
 from .utils import validate_query_data
 from .utils import validate_schema
+from .utils import validate_update_data
 from onstrodb.errors.common_errors import DataDuplicateError
 from onstrodb.errors.common_errors import DataError
 from onstrodb.errors.schema_errors import SchemaError
@@ -81,7 +82,6 @@ class OnstroDb:
                         f"The data {data!r} does not comply with the schema")
 
         new_df = pd.DataFrame(new_data, new_hashes)
-        print(new_df)
 
         try:
             self._db = pd.concat([self._db, new_df],
@@ -115,11 +115,20 @@ class OnstroDb:
 
     def update_by_query(self, query: Dict[str, object], update_data: DBDataType) -> None:
         if self._schema:
-            if validate_query_data(query, self._schema):
-                pass
+            if validate_query_data(query, self._schema) and validate_update_data(update_data, self._schema):
+                q_key = list(query)[0]
+                q_val = query[q_key]
+
+                filt = self._db[q_key] == q_val
+                for key, val in update_data.items():
+                    self._db.loc[filt, key] = val
 
     def update_by_hash_id(self, hash_id: str, update_data: DBDataType) -> None:
-        pass
+        if hash_id in self._db.index:
+            if self._schema:
+                if validate_update_data(update_data, self._schema):
+                    for key, val in update_data.items():
+                        self._db.loc[hash_id, key] = val
 
     def delete_by_query(self, query: Dict[str, object]) -> None:
         if self._schema:
