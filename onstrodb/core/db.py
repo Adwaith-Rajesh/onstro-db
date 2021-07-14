@@ -81,11 +81,13 @@ class OnstroDb:
                         f"The data {data!r} does not comply with the schema")
 
         new_df = pd.DataFrame(new_data, new_hashes)
+        print(new_df)
 
         try:
             self._db = pd.concat([self._db, new_df],
                                  verify_integrity=not self._data_dupe)
-        except ValueError:
+        except ValueError as e:
+            print(e)
             raise DataDuplicateError(
                 "The data provided, contains duplicate values") from None
 
@@ -179,10 +181,13 @@ class OnstroDb:
     def _reload_db(self) -> None:
         """Reload the the pandas DF"""
 
-        data = load_db(self._db_path, self._db_name)
-        if isinstance(data, pd.DataFrame):
-            # data.set_index("hash", inplace=True)
-            self._db = data
+        if not self._in_memory:
+            data = load_db(self._db_path, self._db_name)
+            if isinstance(data, pd.DataFrame):
+                self._db = data
+
+            else:
+                self._db = pd.DataFrame(columns=self._columns)
 
         else:
             self._db = pd.DataFrame(columns=self._columns)
