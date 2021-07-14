@@ -1,3 +1,4 @@
+import uuid
 from pprint import pformat
 from typing import Dict
 from typing import List
@@ -70,9 +71,8 @@ class OnstroDb:
             if self._schema:
                 if validate_data_with_schema(data, self._schema):
                     data = add_default_to_data(data, self._schema)
-                    hash_id = generate_hash_id(
-                        [str(i) for i in data.values()])
-
+                    hash_id = self._get_hash(
+                        [str(i) for i in data.values()], list(self._db.index) + new_hashes)
                     new_data.append(data)
                     new_hashes.append(hash_id)
 
@@ -104,7 +104,9 @@ class OnstroDb:
         return None
 
     def get_by_hash_id(self, hash_id: str) -> GetType:
-        pass
+        if hash_id in self._db.index:
+            return self._to_dict(self._db.loc[hash_id])
+        return {}
 
     def get_all(self) -> GetType:
         return self._to_dict(self._db)
@@ -135,17 +137,36 @@ class OnstroDb:
         self._db = self._db.iloc[0:0]
 
     def commit(self) -> None:
-        """Store the current in the db in a file"""
+        """Store the current db in a file"""
         if isinstance(self._db, pd.DataFrame):
             if not self._in_memory:
                 dump_db(self._db, self._db_path, self._db_name)
 
-    def _to_dict(self, _df: pd.DataFrame) -> Dict[str, Dict[str, object]]:
+    def _get_hash(self, values: List[str], hash_list: List[str]) -> str:
+        """returns the hash id based on the dupe value"""
+
+        def gen_dupe_hash(extra: int = 0) -> str:
+            if extra:
+                hash_ = generate_hash_id(values + [str(extra)])
+            else:
+                hash_ = generate_hash_id(values)
+            if hash_ in hash_list:
+                return gen_dupe_hash(uuid.uuid4().int)
+            else:
+                return hash_
+
+        if not self._data_dupe:
+            return generate_hash_id(values)
+
+        else:
+            return gen_dupe_hash()
+
+    def _to_dict(self, _df: Union[pd.DataFrame, pd.Series]) -> Dict[str, Dict[str, object]]:
         """Returns the dict representation of the DB based on
             the allow_data_duplication value
         """
 
-        if not self._data_dupe:
+        if not self._data_dupe and isinstance(_df, pd.DataFrame):
             return _df.to_dict("index")
 
         else:
