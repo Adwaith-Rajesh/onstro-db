@@ -38,6 +38,18 @@ def rm_folder():
     remove_folders()
 
 
+@pytest.fixture
+def db_w_data():
+    db = OnstroDb(db_name="test", in_memory=True, schema=test_schema)
+    db.add([
+        {"name": "ab", "age": 3},
+        {"name": "ac", "age": 3, "place": "france"},
+        {"name": "ad", "age": 4}
+    ])
+
+    return db
+
+
 def test_file_folder_creation(db_class):
     assert Path("./test_onstro").is_dir() is True
     assert Path("./test_onstro/test").is_dir() is True
@@ -168,16 +180,9 @@ def test_db_in_memory():
         ({"age": 5}, {})
     )
 )
-def test_db_get_by_query_no_dupe(test_input, output):
+def test_db_get_by_query_no_dupe(test_input, output, db_w_data):
 
-    db = OnstroDb(db_name="test", in_memory=True, schema=test_schema)
-    db.add([
-        {"name": "ab", "age": 3},
-        {"name": "ac", "age": 3, "place": "france"},
-        {"name": "ad", "age": 4}
-    ])
-
-    assert db.get_by_query(test_input) == output
+    assert db_w_data.get_by_query(test_input) == output
 
 
 @pytest.mark.parametrize(
@@ -194,51 +199,28 @@ def test_db_get_by_query_failure(test_input):
         db.get_by_query(test_input)
 
 
-def test_db_get_all_no_dupe():
-    db = OnstroDb(db_name="test", in_memory=True,
-                  schema=test_schema, allow_data_duplication=False)
-    db.add([
-        {"name": "ab", "age": 3},
-        {"name": "ac", "age": 3, "place": "france"},
-        {"name": "ad", "age": 4}
-    ])
-
-    assert db.get_all() == {'a811ebf6': {'name': 'ab', 'age': 3, 'place': 'canada'},
-                            'a103f392': {'name': 'ac', 'age': 3, 'place': 'france'},
-                            'e160bb9c': {'name': 'ad', 'age': 4, 'place': 'canada'}}
+def test_db_get_all_no_dupe(db_w_data):
+    assert db_w_data.get_all() == {'a811ebf6': {'name': 'ab', 'age': 3, 'place': 'canada'},
+                                   'a103f392': {'name': 'ac', 'age': 3, 'place': 'france'},
+                                   'e160bb9c': {'name': 'ad', 'age': 4, 'place': 'canada'}}
 
 
-def test_db_get_all_dupe():
-    db = OnstroDb(db_name="test", in_memory=True,
-                  schema=test_schema, allow_data_duplication=True)
-    db.add([
-        {"name": "ab", "age": 3},
-        {"name": "ac", "age": 3, "place": "france"},
-        {"name": "ad", "age": 4}
-    ])
-
-    assert db.get_all() == {'a103f392': {'age': 3, 'name': 'ac', 'place': 'france'},
-                            'a811ebf6': {'age': 3, 'name': 'ab', 'place': 'canada'},
-                            'e160bb9c': {'age': 4, 'name': 'ad', 'place': 'canada'}}
+def test_db_get_all_dupe(db_w_data):
+    assert db_w_data.get_all() == {'a103f392': {'age': 3, 'name': 'ac', 'place': 'france'},
+                                   'a811ebf6': {'age': 3, 'name': 'ab', 'place': 'canada'},
+                                   'e160bb9c': {'age': 4, 'name': 'ad', 'place': 'canada'}}
 
 
-def test_db_delete_by_query():
-    db = OnstroDb(db_name="test", in_memory=True,
-                  schema=test_schema, allow_data_duplication=False)
-    db.add([
-        {"name": "ab", "age": 3},
-        {"name": "ac", "age": 3, "place": "france"},
-        {"name": "ad", "age": 4}
-    ])
+def test_db_delete_by_query(db_w_data):
 
-    assert db.get_all() == {'a811ebf6': {'name': 'ab', 'age': 3, 'place': 'canada'},
-                            'a103f392': {'name': 'ac', 'age': 3, 'place': 'france'},
-                            'e160bb9c': {'name': 'ad', 'age': 4, 'place': 'canada'}}
+    assert db_w_data.get_all() == {'a811ebf6': {'name': 'ab', 'age': 3, 'place': 'canada'},
+                                   'a103f392': {'name': 'ac', 'age': 3, 'place': 'france'},
+                                   'e160bb9c': {'name': 'ad', 'age': 4, 'place': 'canada'}}
 
-    db.delete_by_query({"age": 3})
+    db_w_data.delete_by_query({"age": 3})
 
-    assert db.get_all() == {'e160bb9c': {'name': 'ad',
-                                         'age': 4, 'place': 'canada'}}
+    assert db_w_data.get_all() == {'e160bb9c': {'name': 'ad',
+                                                'age': 4, 'place': 'canada'}}
 
 
 @pytest.mark.parametrize(
@@ -254,17 +236,9 @@ def test_db_delete_by_query():
                       'a811ebf6': {'age': 3, 'name': 'ab', 'place': 'canada'}})
     )
 )
-def test_db_delete_by_hash_id(hash_id, output):
-    db = OnstroDb(db_name="test", in_memory=True,
-                  schema=test_schema, allow_data_duplication=False)
-    db.add([
-        {"name": "ab", "age": 3},
-        {"name": "ac", "age": 3, "place": "france"},
-        {"name": "ad", "age": 4}
-    ])
-
-    db.delete_by_hash_id(hash_id)
-    assert db.get_all() == output
+def test_db_delete_by_hash_id(hash_id, output, db_w_data):
+    db_w_data.delete_by_hash_id(hash_id)
+    assert db_w_data.get_all() == output
 
 
 @pytest.mark.parametrize(
@@ -283,16 +257,9 @@ def test_db_delete_by_hash_id(hash_id, output):
                                                 'e160bb9c': {'name': 'ad', 'age': 4, 'place': 'canada'}})
     )
 )
-def test_db_update_by_query(query, ud, output):
-    db = OnstroDb(db_name="test", in_memory=True,
-                  schema=test_schema, allow_data_duplication=False)
-    db.add([
-        {"name": "ab", "age": 3},
-        {"name": "ac", "age": 3, "place": "france"},
-        {"name": "ad", "age": 4}])
-
-    db.update_by_query(query, ud)
-    assert db.get_all() == output
+def test_db_update_by_query(query, ud, output, db_w_data):
+    db_w_data.update_by_query(query, ud)
+    assert db_w_data.get_all() == output
 
 
 @pytest.mark.parametrize(
@@ -311,13 +278,18 @@ def test_db_update_by_query(query, ud, output):
                                             'e160bb9c': {'name': 'ad', 'age': 4, 'place': 'canada'}})
     )
 )
-def test_db_update_hash_id(hash_id, ud, output):
-    db = OnstroDb(db_name="test", in_memory=True,
-                  schema=test_schema, allow_data_duplication=False)
-    db.add([
-        {"name": "ab", "age": 3},
-        {"name": "ac", "age": 3, "place": "france"},
-        {"name": "ad", "age": 4}])
+def test_db_update_hash_id(hash_id, ud, output, db_w_data):
+    db_w_data.update_by_hash_id(hash_id, ud)
+    assert db_w_data.get_all() == output
 
-    db.update_by_hash_id(hash_id, ud)
-    assert db.get_all() == output
+
+@pytest.mark.parametrize(
+    "test_input,output",
+    (
+        ({"name": "ab"}, ["a811ebf6"]),
+        ({"place": "canada"}, ["a811ebf6", "e160bb9c"]),
+        ({"name": "add"}, [])
+    )
+)
+def test_db_get_hash_id(test_input, output, db_w_data):
+    assert db_w_data.get_hash_id(test_input) == output

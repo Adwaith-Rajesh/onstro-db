@@ -110,6 +110,16 @@ class OnstroDb:
             return self._to_dict(self._db.loc[hash_id])
         return {}
 
+    def get_hash_id(self, condition: Dict[str, object]) -> List[str]:
+        """Returns a hash id or a list of ids that matches all the conditions"""
+
+        # the validate_update_method can be used as the same verification style is required here.
+        if self._schema:
+            if validate_update_data(condition, self._schema):
+                return list(self._db.loc[(self._db[list(condition)]
+                                          == pd.Series(condition)).all(axis=1)].index)
+        return []
+
     def get_all(self) -> GetType:
         return self._to_dict(self._db)
 
