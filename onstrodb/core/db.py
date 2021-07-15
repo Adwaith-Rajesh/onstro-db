@@ -61,7 +61,7 @@ class OnstroDb:
         self._reload_db()
 
     def __repr__(self) -> str:
-        return pformat(self._to_dict(self._db), indent=4, width=80)
+        return pformat(self._to_dict(self._db), indent=4, width=80, sort_dicts=False)
 
     def add(self, values: List[Dict[str, object]], get_hash_id: bool = False) -> Union[None, List[str]]:
 
@@ -86,8 +86,7 @@ class OnstroDb:
         try:
             self._db = pd.concat([self._db, new_df],
                                  verify_integrity=not self._data_dupe)
-        except ValueError as e:
-            print(e)
+        except ValueError:
             raise DataDuplicateError(
                 "The data provided, contains duplicate values") from None
 
@@ -241,7 +240,10 @@ class OnstroDb:
         """Loads the schema that was provided when the DB was created for the first time"""
         if not self._in_memory:
             create_db_folders(self._db_path)
-        schema = load_cached_schema(self._db_path)
+        if not self._in_memory:
+            schema = load_cached_schema(self._db_path)
+        else:
+            schema = None
         if schema:
             if self._schema:
                 if not schema == self._schema:
