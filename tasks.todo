@@ -1,4 +1,3 @@
 db:
-    ☐ Add test to delelet, update methods
-    ☐ Change the _to_dict
     ☐ cli
+    ☐ get_hash_id method

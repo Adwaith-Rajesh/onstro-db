@@ -26,7 +26,7 @@ from onstrodb.errors.schema_errors import SchemaError
 # types
 DBDataType = Dict[str, object]
 SchemaDictType = Dict[str, Dict[str, object]]
-GetType = Union[Dict[str, Dict[str, object]], None]
+GetType = Union[Dict[str, Union[Dict[str, object], str]], None]
 
 
 class OnstroDb:
@@ -113,7 +113,7 @@ class OnstroDb:
     def get_all(self) -> GetType:
         return self._to_dict(self._db)
 
-    def update_by_query(self, query: Dict[str, object], update_data: DBDataType) -> None:
+    def update_by_query(self, query: Dict[str, object], update_data: DBDataType) -> Dict[str, str]:
         if self._schema:
             if validate_query_data(query, self._schema) and validate_update_data(update_data, self._schema):
                 q_key = list(query)[0]
@@ -123,12 +123,23 @@ class OnstroDb:
                 for key, val in update_data.items():
                     self._db.loc[filt, key] = val
 
-    def update_by_hash_id(self, hash_id: str, update_data: DBDataType) -> None:
+                # update the indexes
+                indexes = list(self._db.loc[filt].index)
+                return self._update_hash_id(indexes)
+
+        return {}
+
+    def update_by_hash_id(self, hash_id: str, update_data: DBDataType) -> Dict[str, str]:
         if hash_id in self._db.index:
             if self._schema:
                 if validate_update_data(update_data, self._schema):
                     for key, val in update_data.items():
                         self._db.loc[hash_id, key] = val
+
+                    # update the index
+                    return self._update_hash_id([hash_id])
+
+        return {}
 
     def delete_by_query(self, query: Dict[str, object]) -> None:
         if self._schema:
@@ -172,12 +183,27 @@ class OnstroDb:
         else:
             return gen_dupe_hash()
 
-    def _to_dict(self, _df: Union[pd.DataFrame, pd.Series]) -> Dict[str, Dict[str, object]]:
+    def _update_hash_id(self, old_hashes: List[str]) -> Dict[str, str]:
+        """Updates the hash when the values are changed"""
+        new_hashes: Dict[str, str] = {}
+        for idx in old_hashes:
+            values = self.get_by_hash_id(idx)
+
+            if isinstance(values, dict):
+                hash_ = self._get_hash(
+                    list(map(str, values.values())), list(map(str, self._db.index)))
+
+                self._db.rename(index={idx: hash_}, inplace=True)
+                new_hashes[idx] = hash_
+
+        return new_hashes
+
+    def _to_dict(self, _df: Union[pd.DataFrame, pd.Series]) -> Dict[str, Union[Dict[str, object], str]]:
         """Returns the dict representation of the DB based on
             the allow_data_duplication value
         """
 
-        if not self._data_dupe and isinstance(_df, pd.DataFrame):
+        if isinstance(_df, pd.DataFrame):
             return _df.to_dict("index")
 
         else:
