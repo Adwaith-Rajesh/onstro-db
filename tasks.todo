@@ -1,4 +1,4 @@
 db:
     ☐ cli
     ✔ get_hash_id method @done(21-07-15 19:20)
-    ☐ Add docstrings to class methods
+    ✔ Add docstrings to class methods @started(21-07-15 20:21) @done(21-07-15 20:21) @lasted(39s)

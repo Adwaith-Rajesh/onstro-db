@@ -293,3 +293,18 @@ def test_db_update_hash_id(hash_id, ud, output, db_w_data):
 )
 def test_db_get_hash_id(test_input, output, db_w_data):
     assert db_w_data.get_hash_id(test_input) == output
+
+
+@pytest.mark.parametrize(
+    "test_input,output", (
+        ([{"name": "test"}, {"name": "me"}], 2),
+        ([{"name": "test"}, {"name": "me"}], 2),
+        ([{"name": "test"}], 1),
+        ([], 0),
+    )
+)
+def test_db_len(test_input, output):
+    test_schema: Dict[str, Dict[str, object]] = {"name": {"type": "str"}}
+    db = OnstroDb(db_name="test", in_memory=True, schema=test_schema)
+    db.add(test_input)
+    assert len(db) == output

@@ -63,7 +63,11 @@ class OnstroDb:
     def __repr__(self) -> str:
         return pformat(self._to_dict(self._db), indent=4, width=80, sort_dicts=False)
 
+    def __len__(self) -> int:
+        return len(self._db.index)
+
     def add(self, values: List[Dict[str, object]], get_hash_id: bool = False) -> Union[None, List[str]]:
+        """Adds a list of values to the DB"""
 
         new_data: List[Dict[str, object]] = []
         new_hashes: List[str] = []
@@ -96,6 +100,7 @@ class OnstroDb:
         return None
 
     def get_by_query(self, query: Dict[str, object]) -> GetType:
+        """Get values from the DB. queries must comply with the schema and must be of length 1"""
         if self._schema:
             if validate_query_data(query, self._schema):
                 key = list(query)[0]
@@ -105,6 +110,8 @@ class OnstroDb:
         return None
 
     def get_by_hash_id(self, hash_id: str) -> GetType:
+        """Get values from the DB based on their hash ID"""
+
         if hash_id in self._db.index:
             return self._to_dict(self._db.loc[hash_id])
         return {}
@@ -120,9 +127,13 @@ class OnstroDb:
         return []
 
     def get_all(self) -> GetType:
+        """Return the entire DB in a dict representation"""
+
         return self._to_dict(self._db)
 
     def update_by_query(self, query: Dict[str, object], update_data: DBDataType) -> Dict[str, str]:
+        """Update the records in the DB with a query"""
+
         if self._schema:
             if validate_query_data(query, self._schema) and validate_update_data(update_data, self._schema):
                 q_key = list(query)[0]
@@ -139,6 +150,8 @@ class OnstroDb:
         return {}
 
     def update_by_hash_id(self, hash_id: str, update_data: DBDataType) -> Dict[str, str]:
+        """Update the records in the DB using their hash id"""
+
         if hash_id in self._db.index:
             if self._schema:
                 if validate_update_data(update_data, self._schema):
@@ -151,6 +164,8 @@ class OnstroDb:
         return {}
 
     def delete_by_query(self, query: Dict[str, object]) -> None:
+        """Delete the records from the db that complies to the query"""
+
         if self._schema:
             if validate_query_data(query, self._schema):
                 key = list(query)[0]
@@ -158,7 +173,8 @@ class OnstroDb:
                 self._db = self._db.loc[filt]
 
     def delete_by_hash_id(self, hash_id: str) -> None:
-        # :TODO: test for this method
+        """Delete the a records from thr DB based on their hash_id"""
+
         ids = list(self._db.index)
         if hash_id in ids:
             self._db = self._db.drop(hash_id)
