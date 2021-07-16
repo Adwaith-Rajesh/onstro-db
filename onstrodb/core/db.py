@@ -179,6 +179,10 @@ class OnstroDb:
         if hash_id in ids:
             self._db = self._db.drop(hash_id)
 
+    def raw_db(self) -> pd.DataFrame:
+        """Returns the in in memory representation of the DB"""
+        return self._db.copy(deep=True)
+
     def purge(self) -> None:
         """Removes all the data from the runtime instance of the db"""
         self._db = self._db.iloc[0:0]

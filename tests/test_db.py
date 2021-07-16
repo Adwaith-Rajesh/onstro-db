@@ -308,3 +308,9 @@ def test_db_len(test_input, output):
     db = OnstroDb(db_name="test", in_memory=True, schema=test_schema)
     db.add(test_input)
     assert len(db) == output
+
+
+def test_raw_db(db_w_data):
+
+    df = db_w_data.raw_db()
+    assert df.equals(db_w_data._db)
