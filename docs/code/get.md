@@ -93,7 +93,3 @@ print(data)
 ```
 
     {'7b672af4': {'name': 'ad', 'age': 3}, '93b626d2': {'name': 'fred', 'age': 4}, 'f3d32e1e': {'name': 'dev', 'age': 3}}
-
-```python
-
-```

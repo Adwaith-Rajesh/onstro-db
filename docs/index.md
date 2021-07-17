@@ -16,9 +16,8 @@ A **simple**, **fast** and **strict** DB designed to store and handle large amou
   - [Initializing](./code/initialize)
   - [Adding Data](./code/add)
   - [Getting Data](./code/get)
-  - [Updating Data](./code/updates)
+  - [Updating Data](./code/update)
   - [Deleting Data](./code/delete)
-  - [Purge](./code/delete/#purge)
   - [Multiple Conditions in queries](./code/chain)
 
 ---

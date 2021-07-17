@@ -42,7 +42,7 @@ db.commit()
 
 We all know that [Pandas](https://pandas.pydata.org/) is fast, but it's also really hard to learn for beginners. That's where OnstroDb comes into action. This DB allows you to perform CRUD operations on data, with the speed promised by Pandas. Without you having to know a single thing about pandas. The DB is also strict.,i.e once the schema and the types of the data are defined it cannot be modified. And it also comes with a CLI.
 
-- ### Click [here]() to see the docs.
+- ### Click [here](https://adwaith-rajesh.github.io/onstro-db/docs/) to see the docs.
 
 ## 🤔 Why name it Onstro DB ?
 
