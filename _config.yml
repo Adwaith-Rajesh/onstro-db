@@ -1,1 +1,8 @@
 theme: jekyll-theme-cayman
+
+exclude:
+  - onstrodb/
+  - setup.py
+  - setup.cfg
+  - _config.yml
+  - .pre-commit-config.yaml
