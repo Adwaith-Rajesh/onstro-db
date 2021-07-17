@@ -1,4 +1,4 @@
-# Onstro DB
+<h1 align="center"> Onstro DB </h1>
 
 A **simple**, **fast** and **strict** DB designed to store and handle large amounts of data.
 
@@ -7,19 +7,26 @@ A **simple**, **fast** and **strict** DB designed to store and handle large amou
 - **Super fast** execution speeds.
 - **Unique hash id** for each row, prevents data duplication
 - **Strict** Schema layout.
-- **In-build CLI** To create, delete, and purge a DB
+- **Inbuilt CLI** To create, delete, and purge a DB
 
 # Quick Links
 
 - Code
 
+  - [Initializing](./code/initialize)
   - [Adding Data](./code/add)
   - [Getting Data](./code/get)
   - [Updating Data](./code/updates)
   - [Deleting Data](./code/delete)
   - [Purge](./code/delete/#purge)
+  - [Multiple Conditions in queries](./code/chain)
 
-- CLI
-  - [Creating DB](./cli/create)
-  - [Deleting a DB](./cli/delete)
-  - [Purging a DB](./cli/delete/#purge)
+---
+
+## Using the CLI
+
+```commandline
+onstro --help
+```
+
+This will provide you with all the info necessary to start using cli.
