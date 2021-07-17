@@ -10,7 +10,7 @@ A **simple**, **fast** and **strict** DB designed to store and handle large amou
 ## 🔻 Installation
 
 ```commandline
-pip install onstrodb
+pip install onstro-db
 ```
 
 ## 📚 tl;dr
