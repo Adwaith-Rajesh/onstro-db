@@ -5,7 +5,7 @@
 
 A **simple**, **fast** and **strict** DB designed to store and handle large amounts of data.
 
-![https://adwaith-rajesh.github.io/onstro-db/](./docs/onstro-logo.png "onstro-db")
+![https://adwaith-rajesh.github.io/onstro-db/](https://github.com/Adwaith-Rajesh/onstro-db/blob/master/docs/onstro-logo.png?raw=true "onstro-db")
 
 ## 🔻 Installation
 

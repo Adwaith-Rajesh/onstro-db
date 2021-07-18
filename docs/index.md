@@ -19,10 +19,13 @@ A **simple**, **fast** and **strict** DB designed to store and handle large amou
   - [Updating Data](./code/update)
   - [Deleting Data](./code/delete)
   - [Multiple Conditions in queries](./code/chain)
+  - [The schema design](./code/schema)
 
 ---
 
 ## Using the CLI
+
+After installing OnstroDB run the following command in the terminal.
 
 ```commandline
 onstro --help
