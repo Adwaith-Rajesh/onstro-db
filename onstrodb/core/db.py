@@ -134,19 +134,28 @@ class OnstroDb:
     def update_by_query(self, query: Dict[str, object], update_data: DBDataType) -> Dict[str, str]:
         """Update the records in the DB with a query"""
 
+        u_db = self._db.copy(deep=True)
+
         if self._schema:
             if validate_query_data(query, self._schema) and validate_update_data(update_data, self._schema):
                 q_key = list(query)[0]
                 q_val = query[q_key]
 
-                filt = self._db[q_key] == q_val
+                filt = u_db[q_key] == q_val
                 for key, val in update_data.items():
-                    self._db.loc[filt, key] = val
+                    u_db.loc[filt, key] = val
 
                 # update the indexes
-                indexes = list(self._db.loc[filt].index)
-                return self._update_hash_id(indexes)
+                new_vals = u_db.loc[filt].to_dict("index")
+                new_idx = self._verify_and_get_new_idx(
+                    new_vals, list(u_db.index))
 
+                if new_idx:
+                    new_df = self._update_hash_id(new_idx, u_db)
+                    self._db = new_df.copy(deep=True)
+
+                    del [u_db, new_df]
+                    return new_idx
         return {}
 
     def update_by_hash_id(self, hash_id: str, update_data: DBDataType) -> Dict[str, str]:
@@ -159,7 +168,8 @@ class OnstroDb:
                         self._db.loc[hash_id, key] = val
 
                     # update the index
-                    return self._update_hash_id([hash_id])
+                    # return self._update_hash_id([hash_id], self._db)
+                    return {}
 
         return {}
 
@@ -204,6 +214,7 @@ class OnstroDb:
             if hash_ in hash_list:
                 return gen_dupe_hash(uuid.uuid4().int)
             else:
+                hash_list.append(hash_)
                 return hash_
 
         if not self._data_dupe:
@@ -212,18 +223,34 @@ class OnstroDb:
         else:
             return gen_dupe_hash()
 
-    def _update_hash_id(self, old_hashes: List[str]) -> Dict[str, str]:
-        """Updates the hash when the values are changed"""
+    def _update_hash_id(self, new_hashes: Dict[str, str], _df: pd.DataFrame) -> pd.DataFrame:
+        """Updates the hash to the new hashes """
+
+        for idx, hash_ in new_hashes.items():
+            _df.rename(index={idx: hash_}, inplace=True)
+
+        return _df
+
+    def _verify_and_get_new_idx(self, new_vals: Dict[str, Dict[str, object]], hash_list: List[str]) -> Dict[str, str]:
+        """verify whether the updated is not a duplicate of an existing data"""
         new_hashes: Dict[str, str] = {}
-        for idx in old_hashes:
-            values = self.get_by_hash_id(idx)
+        idxs = list(new_vals)
 
-            if isinstance(values, dict):
-                hash_ = self._get_hash(
-                    list(map(str, values.values())), list(map(str, self._db.index)))
+        for k, v in new_vals.items():
+            hash_ = self._get_hash(
+                list(map(str, v.values())), hash_list)
 
-                self._db.rename(index={idx: hash_}, inplace=True)
-                new_hashes[idx] = hash_
+            if hash_ in self._db.index or (hash_ in idxs and k != hash_) or hash_ in new_hashes.values():
+                if not self._data_dupe:
+                    new_hashes.clear()
+                    raise DataDuplicateError(
+                        "The updated data is a duplicate of an existing data in the DB")
+
+                else:
+                    new_hashes[k] = hash_
+
+            else:
+                new_hashes[k] = hash_
 
         return new_hashes
 
