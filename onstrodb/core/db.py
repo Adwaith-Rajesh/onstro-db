@@ -161,15 +161,26 @@ class OnstroDb:
     def update_by_hash_id(self, hash_id: str, update_data: DBDataType) -> Dict[str, str]:
         """Update the records in the DB using their hash id"""
 
-        if hash_id in self._db.index:
+        u_db = self._db.copy(deep=True)
+
+        if hash_id in u_db.index:
             if self._schema:
                 if validate_update_data(update_data, self._schema):
                     for key, val in update_data.items():
-                        self._db.loc[hash_id, key] = val
+                        u_db.loc[hash_id, key] = val
 
-                    # update the index
-                    # return self._update_hash_id([hash_id], self._db)
-                    return {}
+                    # update the indexes
+                    new_vals = pd.DataFrame(
+                        u_db.loc[hash_id].to_dict(), index=[hash_id]).to_dict("index")
+                    new_idx = self._verify_and_get_new_idx(
+                        new_vals, list(u_db.index))
+
+                    if new_idx:
+                        new_df = self._update_hash_id(new_idx, u_db)
+                        self._db = new_df.copy(deep=True)
+
+                        del [u_db, new_df]
+                        return new_idx
 
         return {}
 

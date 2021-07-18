@@ -314,3 +314,26 @@ def test_raw_db(db_w_data):
 
     df = db_w_data.raw_db()
     assert df.equals(db_w_data._db)
+
+
+@pytest.mark.parametrize(
+    "q,d",
+    (
+        ({"age": 3}, {"place": "france", "name": "ad"}),
+        ({"place": "france"}, {"place": "canada", "name": "ab"}),
+    )
+)
+def test_db_get_by_query_data_dupe(q, d, db_w_data):
+    with pytest.raises(DataDuplicateError):
+        db_w_data.update_by_query(q, d)
+
+
+@pytest.mark.parametrize(
+    "hash_id,d", (
+        ("a811ebf6", {"place": "france", "name": "ac"}),
+        ("e160bb9c", {"name": "ab", "age": 3})
+    )
+)
+def test_get_by_hash_id_data_dupe(hash_id, d, db_w_data):
+    with pytest.raises(DataDuplicateError):
+        db_w_data.update_by_hash_id(hash_id, d)
